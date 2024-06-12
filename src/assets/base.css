@@ -57,3 +57,10 @@
   margin: 0;
   font-weight: normal;
 }
+
+/**
+  PrimeVue overrides
+*/
+.p-inputtext.p-component.p-password-input {
+  width: 100%;
+}

@@ -1,21 +1,20 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
-export async function signUpUser(email: string, password: string): Promise<Session> {
+export async function signUpUser(email: string, password: string): Promise<Session | null> {
   const { data, error } = await supabase.auth.signUp({
     email,
     password
   });
   if (error || !data.session) {
     console.error('Error while signing up', error);
-    throw error;
-  } else {
-    return data.session;
   }
+  return data.session;
 }
 
 export async function logIn(email: string, password: string): Promise<Session | null> {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  console.log(data.session);
   if (error || !data.session) {
     console.error('Error while signing in', error);
   }

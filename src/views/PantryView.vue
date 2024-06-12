@@ -1,43 +1,42 @@
 <script setup lang="ts">
 import type {
-  DataTableRowClickEvent,
   DataTableRowContextMenuEvent,
+  DataTableRowEditCancelEvent,
   DataTableRowEditSaveEvent
 } from 'primevue/datatable';
-import { getItems } from '../services/item-service';
-import { onMounted } from 'vue';
 import { ref } from 'vue';
 import type { PantryItem } from '@/types/items';
-
-onMounted(() => {
-  getItems().then((data) => (items.value = data));
-});
+import { useItemStore } from '../stores/items';
+import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
 
 const editingRows = ref<any[]>([]);
+const itemStore = useItemStore();
 
 const menuItems = ref([
   {
-    label: 'Test',
-    icon: 'pi pi-language'
+    label: 'Delete item',
+    icon: 'pi pi-times',
+    command: () => deleteItems(selectedProducts.value)
   }
 ]);
 const menu = ref();
-
-const items = ref<PantryItem[]>();
+const { items } = storeToRefs(itemStore);
 const addingItem = ref(false);
-const selectedProducts = ref<any[]>();
+const selectedProducts = ref<PantryItem[]>([]);
 
 function addFillerItem() {
-  if (addingItem.value || !items.value) {
+  if (addingItem.value) {
     return;
   }
   const filler: PantryItem = {
-    id: items.value.length,
+    id: -1,
     name: '',
     quantity: '',
-    location: ''
+    location: '',
+    added: false
   };
-  items.value.unshift(filler);
+  // items.value.unshift(filler);
   editingRows.value = [filler];
   addingItem.value = true;
 }
@@ -47,29 +46,42 @@ function showContextMenu(event: DataTableRowContextMenuEvent) {
   menu.value.show(event.originalEvent);
 }
 
-function onRowClick(event: DataTableRowClickEvent) {
-  const originalPointerEvent = event.originalEvent as PointerEvent;
-  if (
-    selectedProducts.value?.includes(event.data) &&
-    !(event.originalEvent as PointerEvent).ctrlKey
-  ) {
-    editingRows.value = [event.data];
+function onRowEditSave(event: DataTableRowEditSaveEvent) {
+  let { newData, data } = event;
+  if (!hasEmptyData(newData)) {
+    if (!data.added) {
+      saveNewItem(newData);
+    } else {
+      updateItem(newData);
+    }
   } else {
-    editingRows.value = [];
+    alert('Row has empty data');
+    editingRows.value.push(data);
   }
 }
 
-function onRowEditSave(event: DataTableRowEditSaveEvent) {
-  let { newData, index } = event;
-  if (!items.value) {
-    return;
-  }
-  if (!hasEmptyData(newData)) {
-    items.value[index] = newData;
-  } else {
-    items.value.shift();
-  }
+async function saveNewItem(item: PantryItem) {
+  await itemStore.addItem(item);
   addingItem.value = false;
+}
+
+async function updateItem(item: PantryItem) {
+  await itemStore.updateItem(item.id, item);
+}
+
+async function deleteItems(items: PantryItem[]) {
+  await Promise.all(items.map((item) => itemStore.deleteItem(item.id)));
+}
+
+function onRowEditCancel(event: DataTableRowEditCancelEvent) {
+  let { data, index } = event;
+  // if (!items.value) {
+  //   return;
+  // }
+  if (!data.added) {
+    // items.value.splice(index, 1);
+    addingItem.value = false;
+  }
 }
 
 function hasEmptyData(data: PantryItem) {
@@ -99,10 +111,23 @@ function hasEmptyData(data: PantryItem) {
         v-model:selection="selectedProducts"
         v-model:editingRows="editingRows"
         selectionMode="multiple"
-        @row-click="onRowClick"
         @row-contextmenu="showContextMenu"
         @row-edit-save="onRowEditSave"
-        :value="items"
+        @row-edit-cancel="onRowEditCancel"
+        :value="
+          addingItem
+            ? [
+                {
+                  id: -1,
+                  name: '',
+                  quantity: '',
+                  location: '',
+                  added: false
+                },
+                ...items
+              ]
+            : items
+        "
         editMode="row"
         resizableColumns
         columnResizeMode="fit"
@@ -161,3 +186,4 @@ function hasEmptyData(data: PantryItem) {
   width: 100%;
 }
 </style>
+../stores/items
