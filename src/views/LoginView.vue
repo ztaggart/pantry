@@ -11,7 +11,7 @@ const router = useRouter();
 function login() {
   logIn(email.value, password.value).then((session) => {
     if (session) {
-      router.push('/pantry#access_token=<...>&refresh_token=<...>');
+      router.push('/pantry');
     } else {
       logInFailed.value = true;
       alert('Log in failed. try again');

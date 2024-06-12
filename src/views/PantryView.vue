@@ -4,7 +4,7 @@ import type {
   DataTableRowEditCancelEvent,
   DataTableRowEditSaveEvent
 } from 'primevue/datatable';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import type { PantryItem } from '@/types/items';
 import { useItemStore } from '../stores/items';
 import { computed } from 'vue';
@@ -12,6 +12,10 @@ import { storeToRefs } from 'pinia';
 
 const editingRows = ref<any[]>([]);
 const itemStore = useItemStore();
+
+onMounted(async () => {
+  await itemStore.getItems();
+});
 
 const menuItems = ref([
   {

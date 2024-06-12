@@ -37,9 +37,13 @@ const router = createRouter({
 
 router.beforeResolve(async (to, _from, next) => {
   const { data } = await supabase.auth.getSession();
-  if (to.meta.requiresAuth && data.session && !hasValidSession(data.session)) {
+  console.log('test?');
+  console.log(to.meta.requiresAuth, data.session);
+  if (to.meta.requiresAuth && (!data.session || !hasValidSession(data.session))) {
+    console.log('going to login');
     next({ name: 'login' });
   } else {
+    console.log('next');
     next();
   }
 });
