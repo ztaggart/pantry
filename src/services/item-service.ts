@@ -15,16 +15,23 @@ export async function getItems(): Promise<PantryItem[]> {
   });
 }
 
-export async function addItem(item: PantryItem) {
+export async function addItem(item: PantryItem): Promise<PantryItem> {
   const user = (await supabase.auth.getUser()).data.user;
   const { name, quantity, location } = item;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('pantry-items')
     .insert({ name, quantity, location, user_id: user!.id })
     .select();
   if (error) {
     throw error;
   }
+  const dbItem: DBPantryItem = data[0] as DBPantryItem;
+  return {
+    id: dbItem.id,
+    name: dbItem.name,
+    quantity: dbItem.quantity,
+    location: dbItem.location
+  };
 }
 
 export async function deleteItem(itemId: number) {

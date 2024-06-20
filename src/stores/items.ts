@@ -19,14 +19,17 @@ export const useItemStore = defineStore('items', {
       if (index < 0) {
         throw new Error('Item id not valid, item not found in array');
       }
-      console.log(this.items);
-      this.items[this.items.findIndex((item) => item.id === itemId)] = updatedItem;
-      console.log(this.items);
+      this.items[index] = updatedItem;
     },
     async addItem(item: PantryItem) {
       try {
-        addItem(item);
         this.items.push(item);
+        const newItem = await addItem(item);
+        const index = this.items.findIndex((i) => i.id === item.id);
+        if (index < 0) {
+          throw new Error('Item id not valid, item not found in array');
+        }
+        this.items[index] = newItem;
       } catch (e) {
         console.error(e);
       }

@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import type {
   DataTableRowContextMenuEvent,
-  DataTableRowEditCancelEvent,
+  DataTableRowDoubleClickEvent,
   DataTableRowEditSaveEvent
 } from 'primevue/datatable';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, toRaw } from 'vue';
 import type { PantryItem } from '@/types/items';
 import { useItemStore } from '../stores/items';
-import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 
-const editingRows = ref<any[]>([]);
 const itemStore = useItemStore();
+const { items } = storeToRefs(itemStore);
 
 onMounted(async () => {
   await itemStore.getItems();
@@ -20,75 +19,40 @@ onMounted(async () => {
 const menuItems = ref([
   {
     label: 'Delete item',
-    icon: 'pi pi-times',
-    command: () => deleteItems(selectedProducts.value)
+    icon: 'pi pi-trash',
+    command: deleteSelectedItems
   }
 ]);
 const menu = ref();
-const { items } = storeToRefs(itemStore);
-const addingItem = ref(false);
-const selectedProducts = ref<PantryItem[]>([]);
 
-function addFillerItem() {
-  if (addingItem.value) {
-    return;
-  }
-  const filler: PantryItem = {
-    id: -1,
-    name: '',
-    quantity: '',
-    location: '',
-    added: false
-  };
-  // items.value.unshift(filler);
-  editingRows.value = [filler];
+const addingItem = ref(false);
+const itemName = ref('');
+const itemLocation = ref('');
+const itemQuantity = ref('');
+const selectedRows = ref<PantryItem[]>([]);
+const editingRows = ref<any[]>([]);
+
+function showAddingModal() {
   addingItem.value = true;
 }
 
 function showContextMenu(event: DataTableRowContextMenuEvent) {
-  selectedProducts.value = [event.data];
+  selectedRows.value = [event.data];
   menu.value.show(event.originalEvent);
 }
 
 function onRowEditSave(event: DataTableRowEditSaveEvent) {
   let { newData, data } = event;
   if (!hasEmptyData(newData)) {
-    if (!data.added) {
-      saveNewItem(newData);
-    } else {
-      updateItem(newData);
-    }
+    updateItem(newData);
   } else {
     alert('Row has empty data');
     editingRows.value.push(data);
   }
 }
 
-async function saveNewItem(item: PantryItem) {
-  await itemStore.addItem(item);
-  addingItem.value = false;
-}
-
-async function updateItem(item: PantryItem) {
-  await itemStore.updateItem(item.id, item);
-}
-
-async function deleteItems(items: PantryItem[]) {
-  await Promise.all(items.map((item) => itemStore.deleteItem(item.id)));
-}
-
-function onRowEditCancel(event: DataTableRowEditCancelEvent) {
-  let { data, index } = event;
-  // if (!items.value) {
-  //   return;
-  // }
-  if (!data.added) {
-    // items.value.splice(index, 1);
-    addingItem.value = false;
-  }
-}
-
 function hasEmptyData(data: PantryItem) {
+  console.log(data);
   let key: keyof PantryItem;
   for (key in data) {
     if (data[key] === '') {
@@ -97,6 +61,41 @@ function hasEmptyData(data: PantryItem) {
   }
   return false;
 }
+
+function onRowDoubleClick(event: DataTableRowDoubleClickEvent) {
+  selectedRows.value = selectedRows.value.filter((row) => row.id !== event.data.id);
+  editingRows.value = [event.data];
+}
+
+function saveNewItem() {
+  const item = {
+    id: new Date().getTime(),
+    name: itemName.value,
+    quantity: itemQuantity.value,
+    location: itemLocation.value
+  };
+  if (hasEmptyData(item)) {
+    alert('Row has empty data');
+    return;
+  }
+  itemStore.addItem(item);
+  addingItem.value = false;
+  itemLocation.value = '';
+  itemName.value = '';
+  itemQuantity.value = '';
+}
+
+async function updateItem(item: PantryItem) {
+  await itemStore.updateItem(item.id, item);
+}
+
+function deleteSelectedItems() {
+  deleteItems(selectedRows.value);
+}
+
+async function deleteItems(items: PantryItem[]) {
+  await Promise.all(items.map((item) => itemStore.deleteItem(item.id)));
+}
 </script>
 <template>
   <div class="pantry-container">
@@ -104,34 +103,42 @@ function hasEmptyData(data: PantryItem) {
     <div class="pantry-table-container">
       <div class="table-tools">
         <div class="pantry-actions">
-          <Button @click="addFillerItem">Add Item</Button>
-          <Button severity="secondary">Undo</Button>
-          <Button severity="secondary">Redo</Button>
+          <Button @click="showAddingModal">Add Item</Button>
+          <Button severity="danger" @click="deleteSelectedItems">Delete Items</Button>
         </div>
-        <InputText placeholder="Search" />
+        <InputText placeholder="Search" size="small" />
       </div>
+      <Dialog
+        v-model:visible="addingItem"
+        modal
+        header="Add Pantry Item"
+        :style="{ width: '25rem' }"
+      >
+        <div class="add-item-container">
+          <div class="attribute-container">
+            <label class="attribute-label"> Name </label>
+            <InputText class="attribute-input" v-model="itemName"></InputText>
+          </div>
+          <div class="attribute-container">
+            <label class="attribute-label"> Quantity </label>
+            <InputText class="attribute-input" v-model="itemQuantity"></InputText>
+          </div>
+          <div class="attribute-container">
+            <label class="attribute-label"> Location </label>
+            <InputText class="attribute-input" v-model="itemLocation"></InputText>
+          </div>
+          <Button class="save-btn" @click="saveNewItem">Save</Button>
+        </div>
+      </Dialog>
       <ContextMenu ref="menu" :model="menuItems" />
       <DataTable
-        v-model:selection="selectedProducts"
+        v-model:selection="selectedRows"
         v-model:editingRows="editingRows"
         selectionMode="multiple"
         @row-contextmenu="showContextMenu"
         @row-edit-save="onRowEditSave"
-        @row-edit-cancel="onRowEditCancel"
-        :value="
-          addingItem
-            ? [
-                {
-                  id: -1,
-                  name: '',
-                  quantity: '',
-                  location: '',
-                  added: false
-                },
-                ...items
-              ]
-            : items
-        "
+        @row-dblclick="onRowDoubleClick"
+        :value="items"
         editMode="row"
         resizableColumns
         columnResizeMode="fit"
@@ -141,19 +148,31 @@ function hasEmptyData(data: PantryItem) {
         :showGridlines="true"
         contextMenu
       >
+        <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
         <Column field="name" header="Name" style=""
           ><template #editor="{ data, field }">
-            <InputText v-model="data[field]" class="input" /> </template
+            <InputText v-model="data[field]" class="edit-input" /> </template
         ></Column>
         <Column field="quantity" header="Quantity" style=""
           ><template #editor="{ data, field }">
-            <InputText v-model="data[field]" class="input" /> </template
+            <InputText v-model="data[field]" class="edit-input" /> </template
         ></Column>
         <Column field="location" header="Location" style=""
           ><template #editor="{ data, field }">
-            <InputText v-model="data[field]" style="width: 100%" class="input" /> </template
+            <InputText v-model="data[field]" style="width: 100%" class="edit-input" /> </template
         ></Column>
-        <Column :rowEditor="true" class="input" style="width: 10%"></Column>
+        <Column :rowEditor="true" class="edit-input" style="width: 10%"> </Column>
+        <Column :rowEditor="true" class="edit-input" style="width: 10%">
+          <template #body="{ data }">
+            <Button
+              @click="() => deleteItems([toRaw(data)])"
+              severity="secondary"
+              text
+              rounded
+              icon="pi pi-trash"
+            ></Button>
+          </template>
+        </Column>
       </DataTable>
     </div>
   </div>
@@ -182,12 +201,31 @@ function hasEmptyData(data: PantryItem) {
   gap: 1em;
 }
 
-.search {
-  border-radius: 50px;
-}
-
-.input {
+.edit-input {
   width: 100%;
 }
+
+.attribute-label {
+  width: 6rem;
+}
+
+.attribute-input {
+  flex: 1 1 auto;
+}
+
+.attribute-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.add-item-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.save-btn {
+  margin: auto;
+}
 </style>
-../stores/items

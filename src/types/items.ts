@@ -11,5 +11,4 @@ export interface PantryItem {
   name: string;
   quantity: string;
   location: string;
-  added: boolean;
 }

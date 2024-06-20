@@ -6,7 +6,6 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 
 function hasValidSession(session: Session | undefined) {
-  console.log('checking if valid session', session);
   return session && session.expires_at && session.expires_at < Date.now();
 }
 
@@ -37,13 +36,9 @@ const router = createRouter({
 
 router.beforeResolve(async (to, _from, next) => {
   const { data } = await supabase.auth.getSession();
-  console.log('test?');
-  console.log(to.meta.requiresAuth, data.session);
   if (to.meta.requiresAuth && (!data.session || !hasValidSession(data.session))) {
-    console.log('going to login');
     next({ name: 'login' });
   } else {
-    console.log('next');
     next();
   }
 });
