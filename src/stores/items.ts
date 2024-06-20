@@ -1,6 +1,4 @@
-import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
-import type { Session } from '@supabase/supabase-js';
 import type { PantryItem } from '@/types/items';
 import { addItem, deleteItem, getItems, updateItem } from '@/services/item-service';
 

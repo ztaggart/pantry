@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
 import type { DBPantryItem, PantryItem } from '@/types/items';
-import type { Session } from '@supabase/supabase-js';
 
 export async function getItems(): Promise<PantryItem[]> {
   const { data, error } = await supabase.from('pantry-items').select('*');
