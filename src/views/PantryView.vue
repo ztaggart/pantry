@@ -52,7 +52,6 @@ function onRowEditSave(event: DataTableRowEditSaveEvent) {
 }
 
 function hasEmptyData(data: PantryItem) {
-  console.log(data);
   let key: keyof PantryItem;
   for (key in data) {
     if (data[key] === '') {

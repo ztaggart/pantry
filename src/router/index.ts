@@ -5,6 +5,8 @@ import RegisterView from '@/views/RegisterView.vue';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import RecipeView from '@/views/RecipeView.vue';
+import RecipesView from '@/views/RecipesView.vue';
+import NotFoundView from '@/views/NotFoundView.vue';
 
 function hasValidSession(session: Session | undefined) {
   return session && session.expires_at && session.expires_at < Date.now();
@@ -38,8 +40,19 @@ const router = createRouter({
     {
       path: '/recipes',
       name: 'recipes',
-      component: RecipeView
-    }
+      component: RecipesView
+    },
+    {
+      path: '/recipes/:id',
+      name: 'single recipe',
+      component: RecipeView,
+      props: true
+    },
+    {
+      path: '/404',
+      component: NotFoundView
+    },
+    { path: '/:pathMatch(.*)*', redirect: '/404' }
   ]
 });
 
