@@ -23,7 +23,6 @@ export const useItemStore = defineStore('items', {
       try {
         this.items.push(item);
         const newItem = await addItem(item);
-        console.log(newItem);
         const index = this.items.findIndex((i) => i.id === item.id);
         if (index < 0) {
           throw new Error('Item id not valid, item not found in array');
