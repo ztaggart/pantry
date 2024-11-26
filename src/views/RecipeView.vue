@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { getRecipeById } from '@/services/recipe-service';
 import { type Recipe } from '@/types/recipes';
-import { useRecipeStore } from '@/stores/recipes';
 import { onMounted, ref } from 'vue';
 import router from '@/router';
 let recipe = ref<Recipe | undefined>(undefined);
@@ -23,16 +22,23 @@ onMounted(async () => {
 });
 </script>
 <template>
+  <div class="recipe-toolbar">
+    <RouterLink :to="`/recipes`">
+      <Button text label="Back to all recipes" icon="pi pi-arrow-left" />
+    </RouterLink>
+    <RouterLink :to="`/recipes/${id}/edit`">
+      <Button label="Edit recipe" icon="pi pi-file-edit" />
+    </RouterLink>
+  </div>
   <div v-if="!recipe">Loading</div>
   <div v-else class="recipe">
-    <h2 class="recipe-title">{{ recipe.title }}</h2>
-    <div>{{ recipe.imageUrl }}</div>
-    <div class="recipe-description">
-      Description:
-      <div>{{ recipe.description }}</div>
+    <label class="recipe-title">{{ recipe.title }}</label>
+    <div v-if="recipe.imageUrl">{{ recipe.imageUrl }}</div>
+    <div v-if="recipe.description" class="recipe-description">
+      <div class="recipe-description-body">{{ recipe.description }}</div>
     </div>
     <div class="recipe-ingredients">
-      Ingredients:
+      <label class="section-title">Ingredients:</label>
       <ul>
         <li v-for="(ingredient, index) in recipe.ingredients" v-bind:key="index">
           {{ ingredient }}
@@ -40,8 +46,12 @@ onMounted(async () => {
       </ul>
     </div>
     <div class="recipe-instructions">
-      Instructions:
-      <div>{{ recipe.instructions }}</div>
+      <label class="section-title">Instructions:</label>
+      <ul>
+        <li v-for="(ingredient, index) in recipe.ingredients" v-bind:key="index">
+          {{ ingredient }}
+        </li>
+      </ul>
     </div>
   </div>
 </template>
@@ -50,5 +60,26 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 5%;
+}
+
+.recipe-toolbar {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.recipe-title {
+  font-weight: bold;
+  font-size: 2em;
+  text-align: center;
+}
+
+.recipe-description-body {
+  text-indent: 10%;
+}
+
+.section-title {
+  font-weight: bold;
 }
 </style>

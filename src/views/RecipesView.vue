@@ -5,7 +5,6 @@ import type { Recipe } from '@/types/recipes';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-
 const recipeStore = useRecipeStore();
 const { recipes } = storeToRefs(recipeStore);
 
@@ -18,9 +17,8 @@ const addingItem = ref(false);
 
 const recipeTitle = ref('');
 const recipeDescription = ref('');
-const recipeInstructions = ref('');
-const recipeIngredient = ref('');
-const recipeIngredients = ref<string[]>([]);
+const recipeInstructions = ref<string[]>(['']);
+const recipeIngredients = ref<string[]>(['']);
 
 async function saveNewRecipe() {
   let recipe = {
@@ -30,6 +28,7 @@ async function saveNewRecipe() {
     instructions: recipeInstructions.value,
     ingredients: recipeIngredients.value
   };
+  console.log(recipe);
   if (hasEmptyData(recipe)) {
     alert('Row has empty data');
     return;
@@ -37,14 +36,9 @@ async function saveNewRecipe() {
   recipeStore.addRecipe(recipe);
   recipeTitle.value = '';
   recipeDescription.value = '';
-  recipeInstructions.value = '';
-  recipeIngredient.value = '';
+  recipeInstructions.value = [];
   recipeIngredients.value = [];
-}
-
-function addIngredient() {
-  recipeIngredients.value.push(recipeIngredient.value);
-  recipeIngredient.value = '';
+  addingItem.value = false;
 }
 
 async function deleteRecipe(recipe: Recipe) {
@@ -59,33 +53,50 @@ async function deleteRecipe(recipe: Recipe) {
     <Dialog v-model:visible="addingItem" modal header="Add Pantry Item" :style="{ width: '25rem' }">
       <div class="add-item-container">
         <div class="attribute-container">
-          <label class="attribute-label"> Title </label>
-          <InputText class="attribute-input" v-model="recipeTitle"></InputText>
+          <label class="attribute-label">Title</label>
+          <InputText
+            class="attribute-input"
+            v-model="recipeTitle"
+            placeholder="Recipe Title"
+          ></InputText>
         </div>
         <div class="attribute-container">
-          <label class="attribute-label"> Description </label>
-          <InputText class="attribute-input" v-model="recipeDescription"></InputText>
-        </div>
-        <div class="attribute-container">
-          <label class="attribute-label"> Instructions </label>
-          <InputText class="attribute-input" v-model="recipeInstructions"></InputText>
-        </div>
-        <div>
-          <span style="display: flex; align-items: center"
-            ><label class="attribute-label">Ingredients</label></span
+          <label class="attribute-label">Description</label>
+          <Textarea
+            :id="`description`"
+            v-model="recipeDescription"
+            rows="3"
+            cols="30"
+            style="resize: vertical"
+            placeholder="Write a description here!"
           >
-          <ul>
-            <li v-for="(ingredient, index) in recipeIngredients" v-bind:key="index">
-              {{ ingredient }}
-              <Button icon="pi pi-trash" @click="() => recipeIngredients.splice(index, 1)"></Button>
-            </li>
-            <li>
-              <InputText class="attribute-input" v-model="recipeIngredient"></InputText
-              ><Button icon="pi pi-plus" @click="addIngredient"></Button>
-            </li>
-          </ul>
+            {{ recipeDescription }}
+          </Textarea>
         </div>
-        <Button class="save-btn" @click="saveNewRecipe">Save</Button>
+        <div class="attribute-container">
+          <label class="attribute-label">Instructions</label>
+          <ListEdit
+            v-model="recipeInstructions"
+            :list="recipeInstructions"
+            placeholder="Add a step"
+            count-label="Step"
+            @append-element="recipeInstructions.push('')"
+            @modify-element="(element, index) => (recipeInstructions[index] = element)"
+            @remove-element="(index) => recipeInstructions.splice(index, 1)"
+          ></ListEdit>
+        </div>
+        <div class="attribute-container">
+          <label class="attribute-label">Ingredients</label>
+          <ListEdit
+            v-model="recipeIngredients"
+            :list="recipeIngredients"
+            placeholder="Add an ingredient"
+            @append-element="recipeIngredients.push('')"
+            @modify-element="(element, index) => (recipeIngredients[index] = element)"
+            @remove-element="(index) => recipeIngredients.splice(index, 1)"
+          ></ListEdit>
+        </div>
+        <Button class="save-btn" @click="saveNewRecipe">Save Recipe</Button>
       </div>
     </Dialog>
     <div class="recipe-grid">
@@ -176,6 +187,8 @@ async function deleteRecipe(recipe: Recipe) {
 
 .attribute-label {
   width: 6rem;
+  font-weight: 600;
+  font-size: 1.1em;
 }
 
 .attribute-input {
@@ -184,13 +197,35 @@ async function deleteRecipe(recipe: Recipe) {
 
 .attribute-container {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 10px;
 }
+
+/* .list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+} */
 
 .add-item-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.instruction-step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ingredient-textbox {
+  display: flex;
+  gap: 10px;
+}
+
+.save-btn {
+  width: max-content;
+  margin-left: auto;
 }
 </style>
