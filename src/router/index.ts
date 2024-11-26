@@ -5,6 +5,7 @@ import RegisterView from '@/views/RegisterView.vue';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import RecipeView from '@/views/RecipeView.vue';
+import RecipeEditView from '@/views/RecipeEditView.vue';
 import RecipesView from '@/views/RecipesView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
 
@@ -46,6 +47,12 @@ const router = createRouter({
       path: '/recipes/:id',
       name: 'single recipe',
       component: RecipeView,
+      props: true
+    },
+    {
+      path: '/recipes/:id/edit',
+      name: 'edit single recipe',
+      component: RecipeEditView,
       props: true
     },
     {

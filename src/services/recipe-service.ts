@@ -57,8 +57,8 @@ export async function deleteRecipe(recipeId: number) {
   }
 }
 
-export async function updateRecipe(id: number, newRecipe: Recipe) {
-  const { error } = await supabase.from('recipes').update(newRecipe).eq('id', id);
+export async function updateRecipe(newRecipe: Recipe) {
+  const { error } = await supabase.from('recipes').update(newRecipe).eq('id', newRecipe.id);
   if (error) {
     throw error;
   }
